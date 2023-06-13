@@ -1,0 +1,2 @@
+/usr/bin/ar qc libActiveObjectAppLib.a CMakeFiles/ActiveObjectAppLib.dir/src/ActiveObject.cpp.o CMakeFiles/ActiveObjectAppLib.dir/src/ActiveObjectScheduler.cpp.o CMakeFiles/ActiveObjectAppLib.dir/src/StateMachine.cpp.o
+/usr/bin/ranlib libActiveObjectAppLib.a
