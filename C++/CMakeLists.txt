@@ -10,10 +10,10 @@ set(APP_NAME ActiveObjectApp)
 set(APP_LIB_NAME ActiveObjectAppLib)
 
 # (2) Include application build instructions
-add_subdirectory(core)
+add_subdirectory(src)
 
 # (3) include tests build instructions   
 option(COMPILE_TESTS "Compile the tests" OFF)
 if(COMPILE_TESTS)
-  add_subdirectory(test)
+  add_subdirectory(tests)
 endif(COMPILE_TESTS)

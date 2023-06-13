@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/ActiveObjectApp_tests.dir/StateMachineTest.cpp.o CMakeFiles/ActiveObjectApp_tests.dir/main.cpp.o -o ActiveObjectApp_tests  ../core/libActiveObjectAppLib.a -lCppUTest -lCppUTestExt 
