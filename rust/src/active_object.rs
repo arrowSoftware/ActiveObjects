@@ -1,65 +1,75 @@
-use std::sync::{Arc, Mutex, Condvar};
-use std::thread::{self, JoinHandle};
+use std::sync::{Mutex, Condvar};
+use std::thread::{self, Builder};
 use arraydeque::ArrayDeque;
 
 use crate::state_machine::{StateMachine, AOEvent, AOSignal};
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Debug)]
 struct ActiveObject {
     exit: bool,
-    thread: JoinHandle<()>,
+    thread_builder: Builder,
     conditional_var: Condvar,
-    mutex: Mutex<i32>,
+    mutex: Mutex<bool>,
     // https://docs.rs/arraydeque/latest/arraydeque/struct.ArrayDeque.html#method.len
-    queue: ArrayDeque<usize, 100>,
-    queue_depth: u32
+    queue: ArrayDeque<AOEvent, 100>,
+    queue_size: u32,
+    stack_size: usize
 }
 
 trait ActiveObjectController {
-    fn new(queue_depth: u32) -> Self;
+    fn new(name: String, queue_size: u32, stack_size: usize) -> Self;
     // Create the thread and start the task method
     fn start(self);
     // push an event onto the active object queue
-    fn post(&self, event: AOEvent) -> bool; 
+    fn post(&mut self, event: AOEvent) -> bool; 
     // push an event to the front of the active object queue
-    fn post_urgent(&self, event: AOEvent) -> bool;
+    fn post_urgent(&mut self, event: AOEvent) -> bool;
     // push an event to all active objects queue.
-    fn publish(&self, event: AOEvent) -> bool;
+    fn publish(&mut self, event: AOEvent) -> bool;
     // push an event to the front of all active objects queue.
-    fn publish_urgent(&self, event: AOEvent) -> bool;
+    fn publish_urgent(&mut self, event: AOEvent) -> bool;
     // Stop the thread.
-    fn stop(&self);
+    fn stop(&mut self);
     // Pull one event of the queue and process it.
-    fn process_one_event(&self) -> bool;
+    fn process_one_event(&mut self) -> bool;
     // Leave the task loop.
-    fn exit_task(&self);
+    fn exit_task(&mut self);
     // Loop inifinitely waiting for events in the queue to process.
-    fn task(&self);
+    fn task(&mut self);
 }
 
 impl ActiveObjectController for ActiveObject {
-    fn new(queue_depth: u32) -> Self {
-        Self.mutex = Arc::new(Mutex::new(0));
+    fn new(name: String, queue_size: u32, stack_size: usize) -> Self {
+        ActiveObject { 
+            exit: false, 
+            thread_builder: thread::Builder::new().name(name).stack_size(stack_size), 
+            conditional_var: Condvar::new(), 
+            mutex: Mutex::new(false), 
+            queue: ArrayDeque::new(), 
+            queue_size: queue_size,
+            stack_size: stack_size
+        }
     }
 
     fn start(mut self) {
-        self.thread = thread::spawn(move || {
+        self.thread_builder.spawn(|| {
             self.task();
-        });
+        }).unwrap();
     }
 
-    fn post(&self, event: AOEvent) -> bool {
+    fn post(&mut self, event: AOEvent) -> bool {
         // Lock the queue mutex.
-        let mut guard: std::sync::MutexGuard<'_, i32> = self.mutex.lock().unwrap();
+        let guard: std::sync::MutexGuard<'_, bool> = self.mutex.lock().unwrap();
         let mut ret: bool = false;
         let queue_size: usize = self.queue.len();
 
         // If the queue is not full. Add the new event to it.
+        // todo 100 shuld be self.queue_size
         if queue_size < 100 {
             self.queue.push_back(event);
 
             // unlock the queue mutex.
-            Mutex::unlock(guard);
+            drop(guard);
 
             if 0 == queue_size {
                 // notify the conditional variable.
@@ -70,18 +80,19 @@ impl ActiveObjectController for ActiveObject {
         ret
     }
 
-    fn post_urgent(&self, event: AOEvent) -> bool {
+    fn post_urgent(&mut self, event: AOEvent) -> bool {
         // Lock the queue mutex.
-        let mut guard: std::sync::MutexGuard<'_, i32> = self.mutex.lock().unwrap();
+        let guard: std::sync::MutexGuard<'_, bool> = self.mutex.lock().unwrap();
         let mut ret: bool = false;
         let queue_size: usize = self.queue.len();
 
         // If the queue is not full. Add the new event to it.
+        // todo 100 shuld be self.queue_size
         if queue_size < 100 {
             self.queue.push_front(event);
 
             // unlock the queue mutex.
-            Mutex::unlock(guard);
+            drop(guard);
 
             if 0 == queue_size {
                 // notify the conditional variable.
@@ -92,31 +103,29 @@ impl ActiveObjectController for ActiveObject {
         ret
     }
 
-    fn publish(&self, event: AOEvent) -> bool {
+    fn publish(&mut self, event: AOEvent) -> bool {
         todo!()
     }
 
-    fn publish_urgent(&self, event: AOEvent) -> bool {
+    fn publish_urgent(&mut self, event: AOEvent) -> bool {
         todo!()
     }
 
-    fn stop(&self) {
-        if thread {
-            self.exit_task();
-            self.post_urgent(AOEvent {sig=AOSignal::AoProbeSig});
-            self.thread.join();
-        }
+    fn stop(&mut self) {
+        self.exit_task();
+        self.post_urgent(AOEvent {sig:AOSignal::AoProbeSig});
+        //self.thread_builder.join().unwrap();    
     }
 
-    fn process_one_event(&self) -> bool {
+    fn process_one_event(&mut self) -> bool {
         todo!()
     }
 
-    fn exit_task(&self) {
+    fn exit_task(&mut self) {
         todo!()
     }
 
-    fn task(&self) {
+    fn task(&mut self) {
         todo!()
     }
 }

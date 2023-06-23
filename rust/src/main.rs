@@ -1,8 +1,7 @@
 mod state_machine;
 mod active_object;
-use new_state_machine::{StateMachine, AOEvent, AOSignal};
-use crate::new_state_machine::MyStateMachine;
-extern crate arraydeque;
+use state_machine::{StateMachine, AOEvent, AOSignal};
+use crate::state_machine::MyStateMachine;
 
 fn main() {
     let mut machine: MyStateMachine = MyStateMachine::new();
