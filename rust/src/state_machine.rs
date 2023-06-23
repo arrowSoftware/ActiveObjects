@@ -1,5 +1,6 @@
+
 #[derive(Copy, Clone, Debug)]
-enum AOSignal {
+pub enum AOSignal {
     AoProbeSig,
     AoEnterSig,
     AoExitSig,
@@ -7,8 +8,8 @@ enum AOSignal {
 }
 
 #[derive(Copy, Clone, Debug)]
-struct AOEvent {
-    sig: AOSignal
+pub struct AOEvent {
+    pub sig: AOSignal
 }
 
 impl AOEvent {
@@ -17,113 +18,69 @@ impl AOEvent {
     }
 }
 
-type StateMethod = fn(&mut State, AOEvent) -> StateRtn;
+#[derive(Copy, Clone, Debug)]
+struct State {}
 
-#[derive(Debug)]
-struct StateRtn {
-    method: StateMethod
+impl State {
+    fn run(&self, event: AOEvent) {}
 }
 
-impl StateRtn {
-    fn new(method: StateMethod) -> StateRtn {
-        StateRtn { method: method }
-    }
-}
-
-#[derive(Debug)]
-struct State  {
-    enter_event: AOEvent,
-    exit_event: AOEvent,
-    current_state: StateMethod,
-    previous_state: StateMethod
-}
-
-trait StateMachine {
+pub trait StateMachine {
     fn new() -> Self;
-    fn initialize(&mut self, initial: StateMethod);
-    fn process_event(&mut self, event: AOEvent);
-    fn transition_to(&self, target_state: StateMethod) -> StateRtn;
-    fn handled(&self) -> StateRtn;
-    fn initial_psuedo_state(&mut self, event: AOEvent) -> StateRtn;
-}
-
-impl StateMachine for State {
-    fn new() -> State {
-        State { 
-            enter_event: AOEvent { 
-                sig: AOSignal::AoEnterSig 
-            }, 
-            exit_event: AOEvent { 
-                sig: AOSignal::AoExitSig
-            }, 
-            current_state: State::initial_psuedo_state,
-            previous_state:  State::initial_psuedo_state
-        }
+    fn initialize(&self) {
+        
     }
-
-    fn initial_psuedo_state(&mut self, event: AOEvent) -> StateRtn {
-        StateRtn { 
-            method: State::initial_psuedo_state
-        }
+    fn get_current_state(&self) -> State;
+    fn set_current_state(&mut self, new_state: State);
+    fn transition_to(&mut self, target_state: State) {
+        println!("Transition to -> {:?}", target_state);
+        self.set_current_state(target_state);
     }
-
-    fn initialize(&mut self, initial: StateMethod) {
-        // Set the state to the initial psuedo state.
-        self.current_state = initial;
-        let ret: StateRtn = (self.current_state)(self, self.enter_event);
-        self.current_state = ret.method;
-        (self.current_state)(self, self.enter_event);
+    fn handled(&mut self) {
+        self.set_current_state(self.get_current_state());
     }
-
     fn process_event(&mut self, event: AOEvent) {
-        let ret: StateRtn = (self.current_state)(self, event);
-        if ret.method != self.current_state {
-            (self.current_state)(self, self.exit_event);
-            self.current_state = ret.method;
-            (self.current_state)(self, self.enter_event);
-        }
-    }
-
-    fn transition_to(&self, target_state: StateMethod) -> StateRtn {
-        StateRtn { 
-            method: target_state 
-        }
-    }
-
-    fn handled(&self)  -> StateRtn {
-        StateRtn { 
-            method: self.current_state 
-        }
+        println!("Processing event");
+        // Call current state with event
+        // If return from current state indicates a transition then
+        // execute the exit event on the current state
+        // update the current state to the new state from the transition
+        // call the new current state with the enter event.
+        self.get_current_state().run(event)
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+///////////////////////////
 
-    trait TestStateMachine : StateMachine {
-        fn initial_psuedo_state(&mut self, event: AOEvent) -> StateRtn;
-        fn initial_state(&mut self, event: AOEvent) -> StateRtn;
-    }
+#[derive(Copy, Clone, Debug)]
+pub struct MyStateMachine {
+    current_state: State,
+    previous_state: State,
+    boot_state: State,
+    idle_state: State
+}
 
-    impl TestStateMachine for State {
-        fn initial_psuedo_state(&mut self, event: AOEvent) -> StateRtn {
-            self.transition_to(TestStateMachine::initial_state)
+impl StateMachine for MyStateMachine {
+    fn new() -> MyStateMachine {
+        MyStateMachine { 
+            current_state: State {
+
+            }, 
+            previous_state: State {
+
+            }, 
+            boot_state: State {
+
+            }, 
+            idle_state: State {
+
+            } 
         }
-
-        fn initial_state(&mut self, event: AOEvent) -> StateRtn {
-            self.handled()
-        }
     }
-
-    #[test]
-    fn test_new() {
-        let mut state: State = StateMachine::new();
-        //assert!(state.current_state as usize == StateMachine::initial_psuedo_state as usize);
+    fn get_current_state(&self) -> State {
+        self.current_state
     }
-
-    fn test_initialize() {
-        let mut state: State = TestStateMachine::new();
-//        state.initialize(state.initial);
+    fn set_current_state(&mut self, new_state: State) {
+        self.current_state = new_state;
     }
 }
