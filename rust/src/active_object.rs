@@ -1,60 +1,57 @@
-use std::sync::{Mutex, Condvar};
+use std::sync::{Arc, Mutex, Condvar};
 use std::thread::{self, Builder};
 use arraydeque::ArrayDeque;
 
 use crate::state_machine::{StateMachine, AOEvent, AOSignal};
 
 #[derive(Debug)]
-struct ActiveObject {
+struct ActiveObjectInner {
     exit: bool,
-    thread_builder: Builder,
+    //thread_builder: Builder,
     conditional_var: Condvar,
     mutex: Mutex<bool>,
-    // https://docs.rs/arraydeque/latest/arraydeque/struct.ArrayDeque.html#method.len
     queue: ArrayDeque<AOEvent, 100>,
     queue_size: u32,
-    stack_size: usize
+    stack_size: usize,
+    state_machine: StateMachine
 }
 
-trait ActiveObjectController {
-    fn new(name: String, queue_size: u32, stack_size: usize) -> Self;
-    // Create the thread and start the task method
-    fn start(self);
-    // push an event onto the active object queue
-    fn post(&mut self, event: AOEvent) -> bool; 
-    // push an event to the front of the active object queue
-    fn post_urgent(&mut self, event: AOEvent) -> bool;
-    // push an event to all active objects queue.
-    fn publish(&mut self, event: AOEvent) -> bool;
-    // push an event to the front of all active objects queue.
-    fn publish_urgent(&mut self, event: AOEvent) -> bool;
-    // Stop the thread.
-    fn stop(&mut self);
-    // Pull one event of the queue and process it.
-    fn process_one_event(&mut self) -> bool;
-    // Leave the task loop.
-    fn exit_task(&mut self);
-    // Loop inifinitely waiting for events in the queue to process.
-    fn task(&mut self);
+#[derive(Debug)]
+pub struct ActiveObject {
+    inner: Arc<Mutex<ActiveObjectInner>>
 }
 
-impl ActiveObjectController for ActiveObject {
-    fn new(name: String, queue_size: u32, stack_size: usize) -> Self {
+impl ActiveObject {
+    pub fn new(name: String, queue_size: u32, stack_size: usize) -> Self {
         ActiveObject { 
-            exit: false, 
-            thread_builder: thread::Builder::new().name(name).stack_size(stack_size), 
-            conditional_var: Condvar::new(), 
-            mutex: Mutex::new(false), 
-            queue: ArrayDeque::new(), 
-            queue_size: queue_size,
-            stack_size: stack_size
+            inner: Arc::new(Mutex::new(ActiveObjectInner {
+                exit: false, 
+                //thread_builder: thread::Builder::new().name(name).stack_size(stack_size), 
+                conditional_var: Condvar::new(), 
+                mutex: Mutex::new(false), 
+                queue: ArrayDeque::new(), 
+                queue_size: queue_size,
+                stack_size: stack_size,
+                state_machine: StateMachine::new()
+            }))
         }
     }
 
-    fn start(mut self) {
-        self.thread_builder.spawn(|| {
-            self.task();
-        }).unwrap();
+    pub fn start(&mut self) {
+        let local_self: Arc<Mutex<ActiveObjectInner>> = self.inner.clone();
+        local_self.initialize();
+        thread::spawn(move || {
+            local_self.lock().unwrap().task();
+        });
+    }
+}
+
+impl ActiveObjectInner {
+    fn initialize(self) {
+        // Set the state to the initial psuedo state.
+        // execute the enter event on the psuedo state.
+        // Enter the real initial state with the enter event.
+        !todo!()
     }
 
     fn post(&mut self, event: AOEvent) -> bool {
@@ -112,20 +109,35 @@ impl ActiveObjectController for ActiveObject {
     }
 
     fn stop(&mut self) {
+        let handle: thread::Thread = thread::current();
         self.exit_task();
         self.post_urgent(AOEvent {sig:AOSignal::AoProbeSig});
-        //self.thread_builder.join().unwrap();    
+        handle.join().unwrap();    
     }
 
     fn process_one_event(&mut self) -> bool {
-        todo!()
+        let guard: std::sync::MutexGuard<'_, bool> = self.mutex.lock().unwrap();
+        let event: AOEvent;
+
+        while self.queue.is_empty() {
+            self.conditional_var.wait(guard);
+        }
+
+        event = self.queue.front();
+        self.queue.pop_front();
+        drop(guard);
+        self.state_machine.processEvent(event)
     }
 
     fn exit_task(&mut self) {
-        todo!()
+        self.exit = true;
     }
 
     fn task(&mut self) {
-        todo!()
+        self.state_machine.initialize();
+
+        while !self.exit {
+            self.process_one_event();
+        }
     }
 }
