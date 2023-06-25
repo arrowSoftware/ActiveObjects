@@ -1,3 +1,4 @@
+use std::sync::{Arc, Mutex};
 mod state_machine;
 mod active_object;
 use state_machine::{AOEvent, AOSignal, State};
@@ -39,8 +40,8 @@ impl State for IdleState {
 }
 
 fn main() {
-    let mut active_object : ActiveObject = ActiveObject::new();
-    let idle_state: Box<IdleState> = Box::new(IdleState::new());
+    let active_object : ActiveObject = ActiveObject::new();
+    let idle_state: Arc<Mutex<IdleState>> = Arc::new(Mutex::new(IdleState::new()));
     active_object.initialize(idle_state);
     active_object.start();
     active_object.stop();

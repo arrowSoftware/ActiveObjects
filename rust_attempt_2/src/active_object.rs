@@ -24,7 +24,7 @@ struct ActiveObjectInternal {
     // stack size
     stack_size: usize,
     // internal state machine trait
-    state_machine: Box<dyn StateMachine>
+    state_machine: Arc<Mutex<dyn StateMachine + Sync + Send>>
 }
 
 impl ActiveObjectInternal {
@@ -43,7 +43,7 @@ impl ActiveObjectInternal {
             self.queue.push_back(event);
 
             // Unlock the queue mutex
-            drop(guard);
+            //drop(guard);
 
             if 0 == queue_size {
                 // notify the conditional variable
@@ -67,7 +67,7 @@ impl ActiveObjectInternal {
             self.queue.push_front(event);
 
             // unlock the queue mutex.
-            drop(guard);
+            //drop(guard);
 
             if 0 == queue_size {
                 // notify the conditional variable.
@@ -87,17 +87,17 @@ impl ActiveObjectInternal {
     }
     fn process_one_event(&mut self) -> bool {
         println!("ActiveObjectInternal::process_one_event");
-        let guard: std::sync::MutexGuard<'_, bool> = self.mutex.lock().unwrap();
+        let guard: std::sync::MutexGuard<'_, bool> = self.mutex.lock().unwrap(); // TODO
         let event: AOEvent;
 
         while self.queue.is_empty() {
-            self.conditional_var.wait(guard);
+            self.conditional_var.wait(self.mutex.lock().unwrap());
         }
 
         event = *self.queue.front().unwrap();
         self.queue.pop_front();
-        drop(guard);
-        self.state_machine.process_event(event);
+        //drop(guard);
+        self.state_machine.lock().unwrap().process_event(event);
         true
     }
     fn exit_task(&mut self) {
@@ -129,13 +129,13 @@ impl ActiveObject {
                 queue: ArrayDeque::new(), 
                 queue_size: 100,
                 stack_size: 100,
-                state_machine: Box::new(InternalStateMachine::new())
+                state_machine: Arc::new(Mutex::new(InternalStateMachine::new()))
             }))
         }
     }
 
-    pub fn initialize(&self, initial_state: Box<dyn State>) {
-        self.internal.lock().unwrap().state_machine.initialize(initial_state);
+    pub fn initialize(&self, initial_state: Arc<Mutex<dyn State + Sync + Send>>) {
+        self.internal.lock().unwrap().state_machine.lock().unwrap().initialize(initial_state);
     }
 
     pub fn start(&self) {
