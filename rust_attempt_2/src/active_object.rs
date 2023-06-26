@@ -7,7 +7,8 @@ use crate::state_machine::{
     InternalStateMachine,
     AOEvent, 
     AOSignal, 
-    State
+    State,
+    StateT
 };
 
 struct ActiveObjectInternal {
@@ -134,7 +135,7 @@ impl ActiveObject {
         }
     }
 
-    pub fn initialize(&self, initial_state: Arc<Mutex<dyn State + Sync + Send>>) {
+    pub fn initialize(&self, initial_state: StateT) {
         self.internal.lock().unwrap().state_machine.lock().unwrap().initialize(initial_state);
     }
 
