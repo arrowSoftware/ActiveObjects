@@ -2,13 +2,13 @@ use std::sync::{Arc, Mutex, Condvar};
 use std::thread::{self, Builder};
 use arraydeque::ArrayDeque;
 
+use crate::AoSignal::AoSignal;
+use crate::AoEvent::AoEvent;
+use crate::State::{State, StateT};
+
 use crate::state_machine::{
     StateMachine, 
     InternalStateMachine,
-    AOEvent, 
-    AOSignal, 
-    State,
-    StateT
 };
 
 struct ActiveObjectInternal {
@@ -19,7 +19,7 @@ struct ActiveObjectInternal {
     // Mutex to lock when accessing the event queue
     mutex: Mutex<bool>,
     // queue contining all incoming events.
-    queue: ArrayDeque<AOEvent, 100>,
+    queue: ArrayDeque<AoEvent, 100>,
     // queue size
     queue_size: u32,
     // stack size
@@ -32,7 +32,7 @@ impl ActiveObjectInternal {
     fn initialize(&self) {
         println!("ActiveObjectInternal::initialize");
     }
-    fn post(&mut self, event: AOEvent) -> bool {
+    fn post(&mut self, event: AoEvent) -> bool {
         println!("ActiveObjectInternal::post");
         let guard: std::sync::MutexGuard<'_, bool> = self.mutex.lock().unwrap();
         let mut ret: bool = false;
@@ -55,7 +55,7 @@ impl ActiveObjectInternal {
         }
         ret
     }
-    fn post_urgent(&mut self, event: AOEvent) -> bool {
+    fn post_urgent(&mut self, event: AoEvent) -> bool {
         println!("ActiveObjectInternal::post_urgent");
         // Lock the queue mutex.
         let guard: std::sync::MutexGuard<'_, bool> = self.mutex.lock().unwrap();
@@ -78,18 +78,18 @@ impl ActiveObjectInternal {
         }
         ret
     }
-    fn publish(&mut self, event: AOEvent) -> bool {
+    fn publish(&mut self, event: AoEvent) -> bool {
         println!("ActiveObjectInternal::publish");
         true
     }
-    fn publish_urgent(&mut self, event: AOEvent) -> bool {
+    fn publish_urgent(&mut self, event: AoEvent) -> bool {
         println!("ActiveObjectInternal::publish_urgent");
         true
     }
     fn process_one_event(&mut self) -> bool {
         println!("ActiveObjectInternal::process_one_event");
         let guard: std::sync::MutexGuard<'_, bool> = self.mutex.lock().unwrap(); // TODO
-        let event: AOEvent;
+        let event: AoEvent;
 
         while self.queue.is_empty() {
             self.conditional_var.wait(self.mutex.lock().unwrap());
@@ -152,7 +152,7 @@ impl ActiveObject {
         println!("ActiveObject::stop");
         let handle: thread::Thread = thread::current();
         self.internal.lock().unwrap().exit_task();
-        self.internal.lock().unwrap().post_urgent(AOEvent {signal: AOSignal::AoProbeSig});
+        self.internal.lock().unwrap().post_urgent(AoEvent {signal: AoSignal::AoProbeSig});
 //        handle.join().unwrap();
     } 
 }

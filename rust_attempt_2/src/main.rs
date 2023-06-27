@@ -1,11 +1,14 @@
 use std::sync::{Arc, Mutex};
+
 mod state_machine;
 mod active_object;
-use state_machine::{AOEvent, AOSignal, State, Action};
-use active_object::{ActiveObject};
+mod AoSignal;
+mod AoEvent;
+mod State;
+mod Action;
 
 //enum MySignals {
-//    AOSignal(AOSignal),
+//    AoSignal(AoSignal),
 //    BootCompleteSig
 //}
 
@@ -22,28 +25,28 @@ impl BootState {
     }
 }
 
-impl State for BootState {
-    fn run(&self, event: AOEvent) -> Action {
-        let mut ret: Action;
+impl State::State for BootState {
+    fn run(&self, event: AoEvent::AoEvent) -> Action::Action {
+        let mut ret: Action::Action;
         println!("BootState::run {:?}", event);
         match event.signal {
-            AOSignal::AoEnterSig => {
+            AoSignal::AoSignal::AoEnterSig => {
                 println!("BootState::run::Enter event");
                 // TODO how to post to the Active Object?
-                // ActiveObject::post(AOEvent { signal: AoTestSig })
-                ret = Action::Handled;
+                // ActiveObject::post(AoEvent { signal: AoTestSig })
+                ret = Action::Action::Handled;
             }
-            AOSignal::AoTestSig => {
+            AoSignal::AoSignal::AoTestSig => {
                 println!("BootState::run::Test event");
-                ret = Action::TransitionTo(new_state!(IdleState::new()));
+                ret = Action::Action::TransitionTo(Arc::new(Mutex::new(IdleState::new())));
             }
-            AOSignal::AoExitSig => {
+            AoSignal::AoSignal::AoExitSig => {
                 println!("BootState::run::Exit event");
-                ret = Action::Handled;
+                ret = Action::Action::Handled;
             }
             _ => {
                 println!("BootState::rune::Default signal handler");
-                ret = Action::Handled;
+                ret = Action::Action::Handled;
             }
         }
         ret
@@ -63,22 +66,22 @@ impl IdleState {
     }
 }
 
-impl State for IdleState {
-    fn run(&self, event: AOEvent) -> Action {
-        let mut ret: Action;
+impl State::State for IdleState {
+    fn run(&self, event: AoEvent::AoEvent) -> Action::Action {
+        let mut ret: Action::Action;
         println!("IdleState::run {:?}", event);
         match event.signal {
-            AOSignal::AoEnterSig => {
+            AoSignal::AoSignal::AoEnterSig => {
                 println!("IdleState::run::Enter event");
-                ret = Action::Handled;
+                ret = Action::Action::Handled;
             }
-            AOSignal::AoExitSig => {
+            AoSignal::AoSignal::AoExitSig => {
                 println!("IdleState::run::Exit event");
-                ret = Action::Handled;
+                ret = Action::Action::Handled;
             }
             _ => {
                 println!("IdleState::rune::Default signal handler");
-                ret = Action::Handled;
+                ret = Action::Action::Handled;
             }
         }
         ret
@@ -86,8 +89,8 @@ impl State for IdleState {
 }
 
 fn main() {
-    let active_object : ActiveObject = ActiveObject::new();
-    let boot_state: Arc<Mutex<BootState>> = new_state!(BootState::new());
+    let active_object : active_object::ActiveObject = active_object::ActiveObject::new();
+    let boot_state: Arc<Mutex<BootState>> = Arc::new(Mutex::new(BootState::new()));
     active_object.initialize(boot_state);
     active_object.start();
     active_object.stop();
