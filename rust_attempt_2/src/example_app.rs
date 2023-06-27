@@ -1,9 +1,9 @@
 use std::sync::{Arc, Mutex};
-use crate::Action::Action;
-use crate::Action::Action::*;
-use crate::State::{State, StateT};
-use crate::AoEvent::AoEvent;
-use crate::AoSignal::AoSignal::*;
+use crate::action::Action;
+use crate::action::Action::*;
+use crate::state::State;
+use crate::ao_event::AoEvent;
+use crate::ao_signal::AoSignal::*;
 use crate::active_object::ActiveObject;
 
 //enum MySignals {
@@ -12,17 +12,20 @@ use crate::active_object::ActiveObject;
 //}
 
 #[derive(Clone)]
-struct BootState {}
+struct BootState {
+}
+
 impl BootState {
     fn new() -> BootState {
         println!("BootState::new");
-        BootState {}
+        BootState {
+        }
     }
 }
 
 impl State for BootState {
     fn run(&self, event: AoEvent) -> Action {
-        let mut ret: Action;
+        let ret: Action;
         println!("BootState::run {:?}", event);
         match event.signal {
             AoEnterSig => {
@@ -55,13 +58,14 @@ struct IdleState {
 impl IdleState {
     fn new() -> IdleState {
         println!("IdleState::new");
-        IdleState {}
+        IdleState {
+        }
     }
 }
 
 impl State for IdleState {
     fn run(&self, event: AoEvent) -> Action {
-        let mut ret: Action;
+        let ret: Action;
         println!("IdleState::run {:?}", event);
         match event.signal {
             AoEnterSig => {

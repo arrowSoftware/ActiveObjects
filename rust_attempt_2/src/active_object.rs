@@ -1,10 +1,10 @@
 use std::sync::{Arc, Mutex, Condvar};
-use std::thread::{self, Builder};
+use std::thread::{self};
 use arraydeque::ArrayDeque;
 
-use crate::AoSignal::AoSignal;
-use crate::AoEvent::AoEvent;
-use crate::State::{State, StateT};
+use crate::ao_signal::AoSignal;
+use crate::ao_event::AoEvent;
+use crate::state::StateT;
 
 use crate::state_machine::{
     StateMachine, 
@@ -34,14 +34,25 @@ impl ActiveObjectInternal {
     }
     fn post(&mut self, event: AoEvent) -> bool {
         println!("ActiveObjectInternal::post");
-        let guard: std::sync::MutexGuard<'_, bool> = self.mutex.lock().unwrap();
-        let mut ret: bool = false;
+        let mut _guard: std::sync::MutexGuard<'_, bool>;
+
+        match self.mutex.lock() {
+            Ok(g) => {
+                _guard = g;
+            }
+            Err(_) => todo!(),
+        }
+
+        let ret: bool = false;
         let queue_size: usize = self.queue.len();
 
         // If the queue is not full. Add the new event to it.
         // TODO 100 should be self.queue_size
         if queue_size < 100 {
-            self.queue.push_back(event);
+            match self.queue.push_back(event) {
+                Ok(_) => todo!(),
+                Err(_) => todo!(),
+            };
 
             // Unlock the queue mutex
             //drop(guard);
@@ -58,14 +69,28 @@ impl ActiveObjectInternal {
     fn post_urgent(&mut self, event: AoEvent) -> bool {
         println!("ActiveObjectInternal::post_urgent");
         // Lock the queue mutex.
-        let guard: std::sync::MutexGuard<'_, bool> = self.mutex.lock().unwrap();
+        let mut _guard: std::sync::MutexGuard<'_, bool>;
+
+        match self.mutex.lock() {
+            Ok(g) => {
+                _guard = g;
+            }
+            Err(_) => todo!(),
+        }
+
         let mut ret: bool = false;
         let queue_size: usize = self.queue.len();
 
         // If the queue is not full. Add the new event to it.
         // todo 100 shuld be self.queue_size
         if queue_size < 100 {
-            self.queue.push_front(event);
+            match self.queue.push_front(event) {
+                Ok(_) => {
+
+                }
+                Err(_) => todo!(),
+            };
+
 
             // unlock the queue mutex.
             //drop(guard);
@@ -88,17 +113,42 @@ impl ActiveObjectInternal {
     }
     fn process_one_event(&mut self) -> bool {
         println!("ActiveObjectInternal::process_one_event");
-        let guard: std::sync::MutexGuard<'_, bool> = self.mutex.lock().unwrap(); // TODO
+        let guard: std::sync::MutexGuard<'_, bool>;
+
+        match self.mutex.lock() {
+            Ok(g) => {
+                guard = g;
+            }
+            Err(_) => todo!(),
+        }
+
         let event: AoEvent;
 
         while self.queue.is_empty() {
-            self.conditional_var.wait(self.mutex.lock().unwrap());
+            match self.conditional_var.wait(self.mutex.lock().unwrap()) {
+                Ok(_) => {
+
+                }
+                Err(_) => todo!(),
+            }
         }
 
-        event = *self.queue.front().unwrap();
+        match self.queue.front() {
+            Some(e) => {
+                event = *e;
+            }
+            None => todo!(),
+        }
+
         self.queue.pop_front();
         //drop(guard);
-        self.state_machine.lock().unwrap().process_event(event);
+
+        match self.state_machine.lock() {
+            Ok(mut sm) => {
+                sm.process_event(event);
+            }
+            Err(_) => todo!(),
+        }
         true
     }
     fn exit_task(&mut self) {
@@ -144,15 +194,25 @@ impl ActiveObject {
         let local_self: Arc<Mutex<ActiveObjectInternal>> = self.internal.clone();
         local_self.lock().unwrap().initialize();
         thread::spawn(move || {
-            local_self.lock().unwrap().task();
+            match local_self.lock() {
+                Ok(mut ls) => {
+                    ls.task();
+                }
+                Err(_) => todo!(),
+            }
         });
     }   
 
     pub fn stop(&self) {
         println!("ActiveObject::stop");
-        let handle: thread::Thread = thread::current();
-        self.internal.lock().unwrap().exit_task();
-        self.internal.lock().unwrap().post_urgent(AoEvent {signal: AoSignal::AoProbeSig});
-//        handle.join().unwrap();
+        //let handle: thread::Thread = thread::current();
+        match self.internal.lock() {
+            Ok(mut i) => {
+                i.exit_task();
+                i.post_urgent(AoEvent {signal: AoSignal::AoProbeSig});
+            }
+            Err(_) => todo!(),
+        }
+        //handle.join().unwrap();
     } 
 }

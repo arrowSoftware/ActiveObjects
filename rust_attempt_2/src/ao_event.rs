@@ -1,5 +1,4 @@
-use crate::AoSignal::AoSignal;
-use crate::Action::Action;
+use crate::ao_signal::AoSignal;
 
 #[derive(Debug, Copy, Clone)]
 pub struct AoEvent {

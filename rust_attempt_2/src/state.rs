@@ -1,14 +1,14 @@
 use std::sync::{Arc, Mutex};
 
-use crate::Action::Action;
-use crate::AoEvent::AoEvent;
+use crate::action::Action;
+use crate::ao_event::AoEvent;
+
 /**
  * A dummy psuedo state used to initialize the default state in the state 
  * machine when its creted.
  */
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct PsuedoState {}
-
 impl PsuedoState {
     /**
      * A Constructor for the PsuedoState structure.

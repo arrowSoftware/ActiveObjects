@@ -1,11 +1,10 @@
-mod Action;
+mod action;
 mod active_object;
-mod AoEvent;
-mod AoSignal;
+mod ao_event;
+mod ao_signal;
 mod example_app;
 mod state_machine;
-mod State;
-
+mod state;
 
 fn main() {
     example_app::run();
