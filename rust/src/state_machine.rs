@@ -1,63 +1,103 @@
+use std::sync::{Arc, Mutex};
 
-#[derive(Copy, Clone, Debug)]
-pub enum AOSignal {
-    AoProbeSig,
-    AoEnterSig,
-    AoExitSig,
-    AoMaxSig,
+
+use crate::ao_signal::AoSignal;
+use crate::ao_event::AoEvent;
+use crate::action::Action;
+use crate::state::{PsuedoState, StateT};
+
+pub struct InternalStateMachine {
+    current_state: StateT
 }
 
-#[derive(Copy, Clone, Debug)]
-pub struct AOEvent {
-    pub sig: AOSignal
-}
-
-impl AOEvent {
-    fn new(signal: AOSignal) -> AOEvent {
-        AOEvent { sig: signal }
-    }
-}
-
-pub trait State {
-    fn new() -> Self;
-    fn run(&self, event: AOEvent);
-}
-
-pub struct StateMachine {
-    pub current_state: State,
-    pub previous_state: State
-}
-
-impl StateMachine {
-    pub fn new() -> StateMachine {
-        StateMachine { 
-            current_state: (), 
-            previous_state: () 
+impl InternalStateMachine {
+    pub fn new() -> InternalStateMachine {
+        InternalStateMachine {
+            current_state: Arc::new(Mutex::new(PsuedoState::new()))
         }
     }
-    pub fn initialize(&self) {
-        !todo!()        
+}
+
+pub trait StateMachine {
+    fn initialize(&mut self, initial_state: StateT);
+    fn get_current_state(&self) -> StateT;
+    fn set_current_state(&mut self, new_state: StateT);
+    fn transition_to(&mut self, target_state: StateT);
+    fn handled(&mut self);
+    fn process_event(&mut self, event: AoEvent);   
+}
+
+impl StateMachine for InternalStateMachine {
+    fn initialize(&mut self, initial_state: StateT) {
+        println!("StateMachine::initialize");
+        // Set the state to the initial state.
+        self.set_current_state(initial_state);
+
+        // execute the enter event on the initial state.
+        match self.get_current_state().lock() {
+            Ok(mut state) => {
+                state.run(AoEvent { 
+                    signal: AoSignal::AoEnterSig 
+                });
+            }
+            Err(_) => todo!(),
+        }
     }
-    pub fn get_current_state(&self) -> State {
-        self.current_state
+    fn get_current_state(&self) -> StateT {
+        println!("StateMachine::get_current_state");
+        self.current_state.clone()
     }
-    pub fn set_current_state(&mut self, new_state: State) {
-        self.current_state = new_state;
+    fn set_current_state(&mut self, new_state: StateT) {
+        println!("StateMachine::set_current_state");
+        self.current_state = new_state.clone();
     }
-    pub fn transition_to(&mut self, target_state: State) {
-        println!("Transition to -> {:?}", target_state);
+    fn transition_to(&mut self, target_state: StateT) {
+        println!("StateMachine::transition_to");
         self.set_current_state(target_state);
+        match self.get_current_state().lock() {
+            Ok(mut state) => {
+                state.run(AoEvent { 
+                    signal: AoSignal::AoEnterSig 
+                });
+            }
+            Err(_) => todo!(),
+        }
     }
-    pub fn handled(&mut self) {
+    fn handled(&mut self) {
+        println!("StateMachine::handled");
         self.set_current_state(self.get_current_state());
     }
-    pub fn process_event(&mut self, event: AOEvent) {
-        println!("Processing event");
+    fn process_event(&mut self, event: AoEvent) {
+        println!("StateMachine::process_event");
+
         // Call current state with event
-        // If return from current state indicates a transition then
-        // execute the exit event on the current state
-        // update the current state to the new state from the transition
-        // call the new current state with the enter event.
-        self.get_current_state().run(event);
+        match self.get_current_state().lock() {
+            Ok(mut state) => {
+                match state.run(event) {
+                    Action::Handled => {
+                        println!("StateMachine::process_event::Handled");
+                        self.handled();
+                    },
+                    Action::TransitionTo(target_state) => {
+                        // If return from current state indicates a transition then
+                        // execute the exit event on the current state
+                        match self.get_current_state().lock() {
+                            Ok(mut state) => {
+                                state.run(AoEvent { 
+                                    signal: AoSignal::AoExitSig 
+                                });
+
+                                println!("StateMachine::process_event::TransitionTo");
+                                self.transition_to(target_state);
+                            }
+                            Err(_) => todo!(),
+                        }
+                    }
+                }
+            }
+            Err(_) => todo!(),
+        }
     }
 }
+
+pub type StateMachineT = Arc<Mutex<dyn StateMachine + Sync + Send>>;

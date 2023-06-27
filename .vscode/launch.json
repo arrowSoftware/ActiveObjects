@@ -1,0 +1,14 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Active Object Rust Debug"
+            ,"type": "lldb"
+            ,"request": "launch"
+            ,"program": "${workspaceRoot}/rust_attempt_2/target/debug/rust_attempt_2.exe"
+        }
+    ]
+}
