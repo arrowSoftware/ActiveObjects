@@ -11,7 +11,7 @@ use crate::state_machine::{
     InternalStateMachine,
 };
 
-struct ActiveObjectInternal {
+pub struct ActiveObject {
     // boolean flag to exit task and join thread
     exit: bool,
     // conditional flag
@@ -28,11 +28,32 @@ struct ActiveObjectInternal {
     state_machine: Arc<Mutex<dyn StateMachine + Sync + Send>>
 }
 
-impl ActiveObjectInternal {
-    fn initialize(&self) {
-        println!("ActiveObjectInternal::initialize");
+impl ActiveObject {
+    pub fn new() -> ActiveObject {
+        println!("ActiveObject::new");
+        ActiveObject {
+            exit: false, 
+            //thread_builder: thread::Builder::new().name(name).stack_size(stack_size), 
+            conditional_var: Condvar::new(), 
+            mutex: Mutex::new(false), 
+            queue: ArrayDeque::new(), 
+            queue_size: 100,
+            stack_size: 100,
+            state_machine: Arc::new(Mutex::new(InternalStateMachine::new()))
+        }
     }
-    fn post(&mut self, event: AoEvent) -> bool {
+
+    pub fn initialize(&self, state: StateT) {
+        self.state_machine.lock().unwrap().initialize(state);
+    }
+    pub fn start(mut self) {
+        println!("ActiveObject::start");
+        thread::spawn(move || {
+            self.task();
+        });
+    }   
+
+    pub fn post(&mut self, event: AoEvent) -> bool {
         println!("ActiveObjectInternal::post");
         let mut _guard: std::sync::MutexGuard<'_, bool>;
 
@@ -68,7 +89,7 @@ impl ActiveObjectInternal {
         }
         ret
     }
-    fn post_urgent(&mut self, event: AoEvent) -> bool {
+    pub fn post_urgent(&mut self, event: AoEvent) -> bool {
         println!("ActiveObjectInternal::post_urgent");
         // Lock the queue mutex.
         let mut _guard: std::sync::MutexGuard<'_, bool>;
@@ -105,15 +126,15 @@ impl ActiveObjectInternal {
         }
         ret
     }
-    fn publish(&mut self, event: AoEvent) -> bool {
+    pub fn publish(&mut self, event: AoEvent) -> bool {
         println!("ActiveObjectInternal::publish");
         true
     }
-    fn publish_urgent(&mut self, event: AoEvent) -> bool {
+    pub fn publish_urgent(&mut self, event: AoEvent) -> bool {
         println!("ActiveObjectInternal::publish_urgent");
         true
     }
-    fn process_one_event(&mut self) -> bool {
+    pub fn process_one_event(&mut self) -> bool {
         println!("ActiveObjectInternal::process_one_event");
         let guard: std::sync::MutexGuard<'_, bool>;
 
@@ -153,11 +174,11 @@ impl ActiveObjectInternal {
         }
         true
     }
-    fn exit_task(&mut self) {
+    pub fn exit_task(&mut self) {
         println!("ActiveObjectInternal::exit_task");
         self.exit = true;
     }
-    fn task(&mut self) {
+    pub fn task(&mut self) {
         println!("ActiveObjectInternal::task");
         while !self.exit {
             self.process_one_event();
@@ -165,6 +186,7 @@ impl ActiveObjectInternal {
     }
 }
 
+/*
 #[derive(Clone)]
 pub struct ActiveObject {
     // hold the internal active object
@@ -238,3 +260,4 @@ impl ActiveObject {
         //handle.join().unwrap();
     } 
 }
+*/
