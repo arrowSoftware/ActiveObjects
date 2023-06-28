@@ -6,11 +6,7 @@ use crate::ao_signal::AoSignal;
 use crate::ao_event::AoEvent;
 use crate::state::StateT;
 
-use crate::state_machine::{
-    StateMachineT,
-    StateMachine, 
-    InternalStateMachine,
-};
+use crate::state_machine::StateMachine;
 
 pub struct ActiveObject {
     // boolean flag to exit task and join thread
@@ -26,7 +22,7 @@ pub struct ActiveObject {
     // stack size
     stack_size: usize,
     // internal state machine trait
-    state_machine: Arc<Mutex<dyn StateMachine + Sync + Send>>
+    state_machine: StateMachine
 }
 
 impl ActiveObject {
@@ -40,12 +36,15 @@ impl ActiveObject {
             queue: ArrayDeque::new(), 
             queue_size: 100,
             stack_size: 100,
-            state_machine: Arc::new(Mutex::new(InternalStateMachine::new()))
+            state_machine: StateMachine::new()
         }
     }
 
-    pub fn initialize(&self, state: StateT) {
-        self.state_machine.lock().unwrap().initialize(state);
+    pub fn initialize(&mut self, state: StateT) {
+        self.state_machine.initialize(state);
+    }
+    pub fn get_state_machine(&self) -> &StateMachine {
+        &self.state_machine
     }
     pub fn start(mut self) {
         println!("ActiveObject::start");
@@ -85,19 +84,14 @@ impl ActiveObject {
         self.queue.pop_front();
         //drop(guard);
 
-        match self.state_machine.lock() {
-            Ok(mut sm) => {
-                sm.process_event(event);
-            }
-            Err(_) => todo!(),
-        }
+        self.state_machine.process_event(event);
         true
     }
     pub fn task(&mut self) {
         println!("ActiveObject::task");
 
         // execute the enter event on the initial state.
-        match self.state_machine.lock().unwrap().get_current_state().lock() {
+        match self.state_machine.get_current_state().lock() {
             Ok(mut state) => {
                 state.run(AoEvent { 
                     signal: AoSignal::AoEnterSig 
