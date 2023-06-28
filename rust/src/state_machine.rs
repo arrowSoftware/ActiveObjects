@@ -32,16 +32,6 @@ impl StateMachine for InternalStateMachine {
         println!("StateMachine::initialize");
         // Set the state to the initial state.
         self.set_current_state(initial_state);
-
-        // execute the enter event on the initial state.
-        match self.get_current_state().lock() {
-            Ok(mut state) => {
-                state.run(AoEvent { 
-                    signal: AoSignal::AoEnterSig 
-                });
-            }
-            Err(_) => todo!(),
-        }
     }
     fn get_current_state(&self) -> StateT {
         println!("StateMachine::get_current_state");

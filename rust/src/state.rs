@@ -42,7 +42,63 @@ macro_rules! new_state {
         Arc::new(Mutex::new($T))
     };
 }
+pub(crate) use new_state;
 
+/*
+macro_rules! declare_state {
+    ($name: ident) => {
+        impl $name {
+            fn post(&mut self, event: AoEvent) -> bool {
+                println!("{} {:?}", concat!(stringify!($name), "::post"), event);
+                let mut ret: bool = false;
+                let queue_size: usize = self.postQueue.len();
+        
+                // If the queue is not full. Add the new event to it.
+                // TODO 100 should be self.queue_size
+                if queue_size < 100 {
+                    match self.postQueue.push_back(event) {
+                        Ok(_) => {
+                            ret = true;
+                        }
+                        Err(_) => {
+                            ret = false;
+                        },
+                    };
+                }
+                ret
+            }
+            fn postUrgent(&mut self, event: AoEvent) -> bool {
+                println!("{} {:?}", concat!(stringify!($name), "::postUrgent"), event);
+                let mut ret: bool = false;
+                let queue_size: usize = self.postQueue.len();
+        
+                // If the queue is not full. Add the new event to it.
+                // TODO 100 should be self.queue_size
+                if queue_size < 100 {
+                    match self.postQueue.push_front(event) {
+                        Ok(_) => {
+                            ret = true;
+                        }
+                        Err(_) => {
+                            ret = false;
+                        },
+                    };
+                }
+                ret
+            }
+            fn publish(&mut self, event: AoEvent) -> bool {
+                println!("{} {:?}", concat!(stringify!($name), "::publish"), event);
+                true
+            }
+            fn publishUrgent(&mut self, event: AoEvent) -> bool {
+                println!("{} {:?}", concat!(stringify!($name), "::publishUrgent"), event);
+                true
+            }
+        }
+    };
+}
+pub(crate) use declare_state;
+*/
 /**
  * Implement the State trait on the psuedo state.
  */
