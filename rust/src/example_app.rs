@@ -6,6 +6,7 @@ use crate::ao_signal::AoSignal::*;
 use crate::active_object::ActiveObject;
 use crate::ao_comms::AoComms;
 
+// TODO
 //enum MySignals {
 //    AoSignal(AoSignal),
 //    BootCompleteSig

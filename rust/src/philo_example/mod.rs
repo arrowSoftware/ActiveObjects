@@ -5,6 +5,7 @@ use crate::ao_event::AoEvent;
 use crate::ao_signal::AoSignal::*;
 use crate::active_object::ActiveObject;
 use crate::ao_comms::AoComms;
+use crate::timer::Timer;
 
 struct PhiloInitial {}
 impl PhiloInitial {
@@ -67,6 +68,8 @@ impl State for PhiloThinking {
         match event.signal {
             AoEnterSig => {
                 // TODO start timer for AoStdTimeoutSig
+                let timer: Timer = Timer::new(AoStdTimeoutSig, 100);
+                timer.arm();
                 println!("PhiloThinking::run::Enter event");
                 ret = Handled;
             }
