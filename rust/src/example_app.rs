@@ -84,7 +84,6 @@ pub fn run() {
     let active_object : ActiveObject = ActiveObject::new();
     let boot_state = Box::new(BootState::new());
     active_object.start(boot_state);
-    //active_object.stop();
 
     loop {}
 }

@@ -6,7 +6,11 @@
 pub enum AoSignal {
     AoProbeSig,         /* Used to shutdown an active object. */
     AoEnterSig,         /* The enter event for states. */
-    AoExitSig,          /* The exit event for stats. */
+    AoExitSig,          /* The exit event for states. */
+    AoStdTimeoutSig,    /* Standard timer signal. */
     AoBeginUserSignals, /* Dummy value, not used. Only here to seperate user signals. */
-    AoTestSig           /* User signal for testing. */
+    AoTestSig,           /* User signal for testing. */
+    AoHungrySig, /* TODO user example signal, shouldnt be defined here */
+    AoEatSig, 
+    AoDoneSig,
 }
