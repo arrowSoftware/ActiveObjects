@@ -1,6 +1,4 @@
-use std::sync::{Arc, Mutex, Condvar};
 use std::thread::{self};
-use arraydeque::ArrayDeque;
 
 use crate::ao_signal::AoSignal;
 use crate::ao_event::AoEvent;
@@ -11,16 +9,6 @@ use crate::state_machine::StateMachine;
 pub struct ActiveObject {
     // boolean flag to exit task and join thread
     exit: bool,
-    // conditional flag
-    conditional_var: Condvar,
-    // Mutex to lock when accessing the event queue
-    mutex: Mutex<bool>,
-    // queue contining all incoming events.
-    queue: ArrayDeque<AoEvent, 100>,
-    // queue size
-    queue_size: u32,
-    // stack size
-    stack_size: usize,
     // internal state machine trait
     state_machine: StateMachine
 }
@@ -29,13 +17,7 @@ impl ActiveObject {
     pub fn new() -> ActiveObject {
         println!("ActiveObject::new");
         ActiveObject {
-            exit: false, 
-            //thread_builder: thread::Builder::new().name(name).stack_size(stack_size), 
-            conditional_var: Condvar::new(), 
-            mutex: Mutex::new(false), 
-            queue: ArrayDeque::new(), 
-            queue_size: 100,
-            stack_size: 100,
+            exit: false,
             state_machine: StateMachine::new()
         }
     }
@@ -43,46 +25,39 @@ impl ActiveObject {
     pub fn initialize(&mut self, state: StateT) {
         self.state_machine.initialize(state);
     }
-    pub fn get_state_machine(&self) -> &StateMachine {
-        &self.state_machine
-    }
     pub fn start(mut self) {
         println!("ActiveObject::start");
         thread::spawn(move || {
             self.task();
         });
-    }   
+    }
     pub fn process_one_event(&mut self) -> bool {
         println!("ActiveObject::process_one_event");
-        let guard: std::sync::MutexGuard<'_, bool>;
-
-        match self.mutex.lock() {
-            Ok(g) => {
-                guard = g;
-            }
-            Err(_) => todo!(),
-        }
-
         let event: AoEvent;
 
-        while self.queue.is_empty() {
-            //match self.conditional_var.wait(self.mutex.lock().unwrap()) {
-            //    Ok(_) => {
+        let (lock, cvar) = self.state_machine.ao_comms.get_post_queue();
+        let mut queue = match lock.lock() {
+            Ok(q) => {
+                q
+            },
+            Err(_) => { todo!() }
+        };
 
-            //    }
+        while queue.is_empty() {
+            //match cvar.wait(queue) {
+            //    Ok(_) => {}
             //    Err(_) => todo!(),
             //}
         }
 
-        match self.queue.front() {
+        match queue.front() {
             Some(e) => {
                 event = *e;
             }
             None => todo!(),
         }
 
-        self.queue.pop_front();
-        //drop(guard);
+        queue.pop_front();
 
         self.state_machine.process_event(event);
         true
@@ -93,9 +68,9 @@ impl ActiveObject {
         // execute the enter event on the initial state.
         match self.state_machine.get_current_state().lock() {
             Ok(mut state) => {
-                state.run(AoEvent { 
-                    signal: AoSignal::AoEnterSig 
-                });
+                state.run(AoEvent {
+                    signal: AoSignal::AoEnterSig
+                }, &mut self.state_machine.ao_comms);
             }
             Err(_) => todo!(),
         }
