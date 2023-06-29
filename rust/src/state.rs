@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use crate::action::Action;
 use crate::ao_event::AoEvent;
 use crate::ao_comms::AoComms;
@@ -21,6 +19,7 @@ impl PsuedoState {
     }
 }
 
+// State trait for all user states.
 pub trait State {
     /**
      * The run function for the state, each new state must implement this function.
@@ -37,9 +36,7 @@ pub trait State {
 // Helper type for references the thread State object.
 pub type StateT = Box<dyn State + Sync + Send>;
 
-/**
- * Implement the State trait on the psuedo state.
- */
+// Implement the State trait on the psuedo state.
 impl State for PsuedoState {
     /**
      * The run function for the state.

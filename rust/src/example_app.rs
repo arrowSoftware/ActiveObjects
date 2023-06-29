@@ -1,12 +1,9 @@
-use std::sync::{Arc, Mutex};
-
 use crate::action::Action;
 use crate::action::Action::*;
 use crate::state::State;
 use crate::ao_event::AoEvent;
 use crate::ao_signal::AoSignal::*;
 use crate::active_object::ActiveObject;
-use crate::state_machine::StateMachine;
 use crate::ao_comms::AoComms;
 
 //enum MySignals {
@@ -31,7 +28,7 @@ impl State for BootState {
         match event.signal {
             AoEnterSig => {
                 println!("BootState::run::Enter event");
-                ao_comms.post(AoEvent { signal: AoTestSig });
+                ao_comms.post(AoEvent::new(AoTestSig));
                 ret = Handled;
             }
             AoTestSig => {
@@ -62,7 +59,7 @@ impl IdleState {
 }
 
 impl State for IdleState {
-    fn run(&mut self, event: AoEvent, ao_comms: &mut AoComms) -> Action {
+    fn run(&mut self, event: AoEvent, _ao_comms: &mut AoComms) -> Action {
         let ret: Action;
         println!("IdleState::run {:?}", event);
         match event.signal {
@@ -84,7 +81,7 @@ impl State for IdleState {
 }
 
 pub fn run() {
-    let mut active_object : ActiveObject = ActiveObject::new();
+    let active_object : ActiveObject = ActiveObject::new();
     let boot_state = Box::new(BootState::new());
     active_object.start(boot_state);
     //active_object.stop();

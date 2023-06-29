@@ -3,12 +3,11 @@ use arraydeque::{ArrayDeque, CapacityError};
 use crate::ao_event::AoEvent;
 
 /**
- * AoComms is the communication interface between (the active object and other active
- * objects) && (The current state and itself).
+ * AoComms is the communication interface between the states and the state post 
+ * queue
  */
 pub struct AoComms<'a> {
-//    pub post_queue: ArrayDeque<AoEvent, 100>,
-//    pub publish_queue: ArrayDeque<AoEvent, 100>,
+    // Reference to the internal state machine queue.
     pub post_queue: &'a mut ArrayDeque<AoEvent, 100>,
 //    pub publish_queue: &'a ArrayDeque<AoEvent, 100>
 }
@@ -62,8 +61,8 @@ impl AoComms<'_> {
      * @param event The event to post to the state machine.
      * @return true if the post was successful, false otherwise.
      */
-    pub fn postUrgent(&mut self, event: AoEvent) -> bool {
-        println!("AoComms::postUrgent {:?}", event);
+    pub fn post_urgent(&mut self, event: AoEvent) -> bool {
+        println!("AoComms::post_urgent {:?}", event);
         let mut success: bool = false;
 
         // If the queue is not full. Add the new event to it.
@@ -132,8 +131,8 @@ impl AoComms<'_> {
      * @param event The event to publish to the state machine.
      * @return true if the publish was successful, false otherwise.
      */
-    pub fn publishUrgent(&mut self, event: AoEvent) -> bool {
-        println!("AoComms::publishUrgent {:?}", event);
+    pub fn publish_urgent(&mut self, event: AoEvent) -> bool {
+        println!("AoComms::publish_urgent {:?}", event);
         todo!();
         /*
         let mut success: bool = false;

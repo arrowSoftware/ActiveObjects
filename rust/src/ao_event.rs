@@ -2,7 +2,7 @@ use crate::ao_signal::AoSignal;
 
 #[derive(Debug, Copy, Clone)]
 pub struct AoEvent {
-    pub signal : AoSignal /* AoSignal used to publish\post this event. */
+    pub signal : AoSignal // AoSignal used to publish\post this event.
 }
 
 impl AoEvent {
