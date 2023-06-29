@@ -36,7 +36,7 @@ impl State for BootState {
             }
             AoTestSig => {
                 println!("BootState::run::Test event");
-                ret = TransitionTo(Arc::new(Mutex::new(IdleState::new())));
+                ret = TransitionTo(Box::new(IdleState::new()));
             }
             AoExitSig => {
                 println!("BootState::run::Exit event");
@@ -85,9 +85,8 @@ impl State for IdleState {
 
 pub fn run() {
     let mut active_object : ActiveObject = ActiveObject::new();
-    let boot_state: Arc<Mutex<BootState>> = Arc::new(Mutex::new(BootState::new()));
-    active_object.initialize(boot_state);
-    active_object.start();
+    let boot_state = Box::new(BootState::new());
+    active_object.start(boot_state);
     //active_object.stop();
 
     loop {}

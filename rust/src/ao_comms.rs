@@ -9,7 +9,7 @@ use crate::ao_event::AoEvent;
 pub struct AoComms<'a> {
 //    pub post_queue: ArrayDeque<AoEvent, 100>,
 //    pub publish_queue: ArrayDeque<AoEvent, 100>,
-    pub post_queue: &'a ArrayDeque<AoEvent, 100>,
+    pub post_queue: &'a mut ArrayDeque<AoEvent, 100>,
 //    pub publish_queue: &'a ArrayDeque<AoEvent, 100>
 }
 
@@ -18,7 +18,7 @@ impl AoComms<'_> {
      * The new method creates the AoComms object containing the post/publish queues.
      * @return AoComms object
      */
-    pub fn new(post_queue: &ArrayDeque<AoEvent, 100>) -> AoComms<'_> {
+    pub fn new(post_queue: &mut ArrayDeque<AoEvent, 100>) -> AoComms<'_> {
         AoComms {
             // The post queue, internal to the current state.
             post_queue: post_queue,

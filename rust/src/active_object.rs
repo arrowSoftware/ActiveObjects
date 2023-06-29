@@ -21,59 +21,34 @@ impl ActiveObject {
             state_machine: StateMachine::new()
         }
     }
-
-    pub fn initialize(&mut self, state: StateT) {
-        self.state_machine.initialize(state);
-    }
-    pub fn start(mut self) {
+    pub fn start(mut self, initial_state: StateT) {
         println!("ActiveObject::start");
         thread::spawn(move || {
-            self.task();
+            self.task(initial_state);
         });
     }
     pub fn process_one_event(&mut self) -> bool {
         println!("ActiveObject::process_one_event");
-        let event: AoEvent;
+        
+        let current_event: AoEvent;
 
-        let (lock, cvar) = self.state_machine.ao_comms.get_post_queue();
-        let mut queue = match lock.lock() {
-            Ok(q) => {
-                q
-            },
-            Err(_) => { todo!() }
-        };
-
-        while queue.is_empty() {
-            //match cvar.wait(queue) {
-            //    Ok(_) => {}
-            //    Err(_) => todo!(),
-            //}
+        loop {
+            match self.state_machine.get_next_event() {
+                Some(e) => {
+                    current_event = e;
+                    break;
+                }
+                None => {}
+            };
         }
 
-        match queue.front() {
-            Some(e) => {
-                event = *e;
-            }
-            None => todo!(),
-        }
-
-        queue.pop_front();
-
-        self.state_machine.process_event(event);
+        self.state_machine.process_event(current_event);
         true
     }
-    pub fn task(&mut self) {
+    pub fn task(&mut self, initial_state: StateT) {
         println!("ActiveObject::task");
 
-        // execute the enter event on the initial state.
-        match self.state_machine.get_current_state().lock() {
-            Ok(mut state) => {
-                state.run(AoEvent {
-                    signal: AoSignal::AoEnterSig
-                }, &mut self.state_machine.ao_comms);
-            }
-            Err(_) => todo!(),
-        }
+        self.state_machine.initialize(initial_state);
 
         while !self.exit {
             self.process_one_event();

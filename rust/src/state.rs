@@ -35,7 +35,7 @@ pub trait State {
 }
 
 // Helper type for references the thread State object.
-pub type StateT = Arc<Mutex<dyn State + Sync + Send>>;
+pub type StateT = Box<dyn State + Sync + Send>;
 
 /**
  * Implement the State trait on the psuedo state.
