@@ -2,6 +2,8 @@ use crate::action::Action;
 use crate::ao_event::AoEvent;
 use crate::ao_comms::AoComms;
 
+// TODO use template for the "me" paremeter of the states.
+
 /**
  * A dummy psuedo state used to initialize the default state in the state
  * machine when its creted.
