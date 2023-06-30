@@ -1,4 +1,4 @@
-use std::thread::{self};
+use std::thread::{self, JoinHandle};
 
 use crate::ao_event::AoEvent;
 use crate::state::StateT;
@@ -25,17 +25,25 @@ impl ActiveObject {
         }
     }
 
+    pub fn store_publish_event(&self, event: AoEvent) {
+
+    }
+
+    pub fn get_next_event(&self) AoEvent {
+        AoEvent::new(AoEnterSig)
+    }
+
     /**
      * Spawns a new thread for this active object and executes the main task
      * method.
      * @param self ActiveObject instance, consumed on call.
      * @param initial_state The initial state for the state machine to enter.
      */
-    pub fn start(mut self, initial_state: StateT) {
+    pub fn start(mut self, initial_state: StateT) -> JoinHandle<()>{
         println!("ActiveObject::start");
         thread::spawn(move || {
             self.task(initial_state);
-        });
+        })
     }
 
     /**

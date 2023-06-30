@@ -7,11 +7,11 @@ use crate::active_object::ActiveObject;
 use crate::ao_comms::AoComms;
 use crate::ao_timer::AoTimer;
 
-struct PhiloInitial {
+pub struct PhiloInitial {
     pub ao_super: AoSuper
 }
 impl PhiloInitial {
-    fn new() -> PhiloInitial {
+    pub fn new() -> PhiloInitial {
         println!("PhiloInitial::new");
         let mut state = PhiloInitial {
             ao_super: AoSuper::new()
@@ -193,12 +193,4 @@ impl State for PhiloEating {
     fn get_super(&mut self) -> AoSuper {
         self.ao_super.clone()
     }
-}
-
-pub fn run() {
-    let active_object : ActiveObject = ActiveObject::new();
-    let initial_state = Box::new(PhiloInitial::new());
-    active_object.start(initial_state);
-
-    loop {}
 }

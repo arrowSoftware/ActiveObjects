@@ -11,7 +11,17 @@ mod ao_timer;
 //mod example_app;
 mod philo_example;
 
+use crate::active_object::ActiveObject;
+use crate::active_object_controller::ActiveObjectController;
+
 fn main() {
-    //example_app::run();
-    philo_example::run();
+    let mut ao_controller: ActiveObjectController = ActiveObjectController::new();
+
+    let mut active_object : ActiveObject = ActiveObject::new();
+    ao_controller.register(&mut active_object);
+
+    active_object.start(Box::new(philo_example::PhiloInitial::new()));
+
+    ao_controller.run();
 }
+
