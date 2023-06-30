@@ -5,7 +5,7 @@ mod ao_signal;
 mod state_machine;
 mod state;
 mod ao_comms;
-mod timer;
+mod ao_timer;
 
 //mod example_app;
 mod philo_example;

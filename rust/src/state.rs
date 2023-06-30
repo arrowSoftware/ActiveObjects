@@ -1,15 +1,41 @@
 use crate::action::Action;
 use crate::ao_event::AoEvent;
 use crate::ao_comms::AoComms;
+use crate::ao_timer::AoTimer;
+use crate::ao_signal::AoSignal;
 
-// TODO use template for the "me" paremeter of the states.
+#[derive(Clone)]
+pub struct AoSuper {
+    ao_timers: Vec<AoTimer>
+}
+impl AoSuper {
+    pub fn new() -> AoSuper {
+        AoSuper {
+            ao_timers: Vec::new()
+        }
+    }
+    pub fn add_timer(&mut self, timer: AoTimer) {
+        self.ao_timers.push(timer.clone());
+    }
+    pub fn tick(&mut self) -> Vec<AoSignal> {
+        let mut expired_timers: Vec<AoSignal> = vec![];
+        for timer in self.ao_timers.iter_mut() {
+            if timer.tick() {
+                expired_timers.push(timer.signal);
+            }
+        }
+        expired_timers
+    }
+}
 
 /**
  * A dummy psuedo state used to initialize the default state in the state
  * machine when its creted.
  */
 #[derive(Clone)]
-pub struct PsuedoState {}
+pub struct PsuedoState {
+    pub ao_super: AoSuper
+}
 impl PsuedoState {
     /**
      * A Constructor for the PsuedoState structure.
@@ -17,7 +43,9 @@ impl PsuedoState {
      */
     pub fn new() -> PsuedoState {
         println!("psuedoState::new");
-        PsuedoState {}
+        PsuedoState {
+            ao_super: AoSuper::new()
+        }
     }
 }
 
@@ -33,6 +61,7 @@ pub trait State {
      * @return Action enum.
      */
     fn run(&mut self, event: AoEvent, ao_comms: &mut AoComms) -> Action;
+    fn get_super(&mut self) -> AoSuper;
 }
 
 // Helper type for references the thread State object.
@@ -52,5 +81,9 @@ impl State for PsuedoState {
         /* Just return handled since this state doesnt actually do anything,
            it is just a place holder. */
         Action::Handled
+    }
+
+    fn get_super(&mut self) -> AoSuper {
+        self.ao_super.clone()
     }
 }

@@ -5,7 +5,6 @@ use crate::ao_event::AoEvent;
 use crate::action::Action;
 use crate::state::{PsuedoState, StateT};
 use crate::ao_comms::AoComms;
-use crate::timer::Timer;
 
 pub struct StateMachine {
     // The current state of the state machine.
@@ -30,7 +29,7 @@ impl StateMachine {
 // State machine used to process events for states and handle state transitions.
 impl StateMachine {
     /**
-     * Sets the initial state and executed the enter 
+     * Sets the initial state and executed the enter
      * event on that state.
      * @param self StateMachine instance.
      * @param initial_state The initial state of the state machine
@@ -44,11 +43,11 @@ impl StateMachine {
         self.process_event(AoEvent::new(AoSignal::AoEnterSig));
     }
 
-    /** 
-     * Will pop the next event off the front of the post queue if there is 
+    /**
+     * Will pop the next event off the front of the post queue if there is
      * an event on the queue, returning it to the caller.
      * @param self StateMachine instance
-     * @return Option None if there is no event on the queue, 
+     * @return Option None if there is no event on the queue,
      * Some(AoEvent) if there is
      */
     pub fn get_next_event(&mut self) -> Option<AoEvent> {
@@ -71,7 +70,7 @@ impl StateMachine {
     }
 
     /**
-     * Will execute the exit event on the current state, switch to the new 
+     * Will execute the exit event on the current state, switch to the new
      * target state then execute the enter event on the new state.
      * @param self StateMachine instance
      * @param target_state State to transition to.
@@ -114,6 +113,17 @@ impl StateMachine {
                 println!("StateMachine::process_event::TransitionTo");
                 self.transition_to(target_state);
             }
+        }
+    }
+
+    pub fn tick(&mut self) {
+        let expired_timers: Vec<AoSignal>;
+        let mut ao_comms: AoComms = AoComms::new(&mut self.post_queue);
+        // Call the timer event on the states to execute the tick function.
+        expired_timers = self.current_state.get_super().tick();
+        // Post all the expired timers signals.
+        for signal in expired_timers.iter() {
+            ao_comms.post(AoEvent::new(*signal));
         }
     }
 }

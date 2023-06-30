@@ -1,41 +1,59 @@
 use crate::action::Action;
 use crate::action::Action::*;
-use crate::state::State;
+use crate::state::{State, AoSuper};
 use crate::ao_event::AoEvent;
 use crate::ao_signal::AoSignal::*;
 use crate::active_object::ActiveObject;
 use crate::ao_comms::AoComms;
-use crate::timer::Timer;
+use crate::ao_timer::AoTimer;
 
-struct PhiloInitial {}
+struct PhiloInitial {
+    pub ao_super: AoSuper
+}
 impl PhiloInitial {
     fn new() -> PhiloInitial {
         println!("PhiloInitial::new");
-        PhiloInitial {}
+        let mut state = PhiloInitial {
+            ao_super: AoSuper::new()
+        };
+        AoTimer::new(&mut state.ao_super, AoStdTimeoutSig, 100);
+        state
     }
 }
 
-struct PhiloThinking {}
+struct PhiloThinking {
+    pub ao_super: AoSuper
+}
 impl PhiloThinking {
     fn new() -> PhiloThinking {
         println!("PhiloThinking::new");
-        PhiloThinking {}
+        PhiloThinking {
+            ao_super: AoSuper::new()
+        }
     }
 }
 
-struct PhiloHungry {}
+struct PhiloHungry {
+    pub ao_super: AoSuper
+}
 impl PhiloHungry {
     fn new() -> PhiloHungry {
         println!("PhiloHungry::new");
-        PhiloHungry {}
+        PhiloHungry {
+            ao_super: AoSuper::new()
+        }
     }
 }
 
-struct PhiloEating {}
+struct PhiloEating {
+    pub ao_super: AoSuper
+}
 impl PhiloEating {
     fn new() -> PhiloEating {
         println!("PhiloEating::new");
-        PhiloEating {}
+        PhiloEating {
+            ao_super: AoSuper::new()
+        }
     }
 }
 
@@ -59,6 +77,9 @@ impl State for PhiloInitial {
         }
         ret
     }
+    fn get_super(&mut self) -> AoSuper {
+        self.ao_super.clone()
+    }
 }
 
 impl State for PhiloThinking {
@@ -68,8 +89,8 @@ impl State for PhiloThinking {
         match event.signal {
             AoEnterSig => {
                 // TODO start timer for AoStdTimeoutSig
-                let timer: Timer = Timer::new(AoStdTimeoutSig, 100);
-                timer.arm();
+                //let timer: Timer = Timer::new(AoStdTimeoutSig, 100);
+                //timer.arm();
                 println!("PhiloThinking::run::Enter event");
                 ret = Handled;
             }
@@ -90,6 +111,9 @@ impl State for PhiloThinking {
             }
         }
         ret
+    }
+    fn get_super(&mut self) -> AoSuper {
+        self.ao_super.clone()
     }
 }
 
@@ -122,6 +146,9 @@ impl State for PhiloHungry {
         }
         ret
     }
+    fn get_super(&mut self) -> AoSuper {
+        self.ao_super.clone()
+    }
 }
 
 impl State for PhiloEating {
@@ -153,6 +180,9 @@ impl State for PhiloEating {
             }
         }
         ret
+    }
+    fn get_super(&mut self) -> AoSuper {
+        self.ao_super.clone()
     }
 }
 

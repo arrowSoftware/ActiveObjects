@@ -26,7 +26,7 @@ impl ActiveObject {
     }
 
     /**
-     * Spawns a new thread for this active object and executes the main task 
+     * Spawns a new thread for this active object and executes the main task
      * method.
      * @param self ActiveObject instance, consumed on call.
      * @param initial_state The initial state for the state machine to enter.
@@ -46,7 +46,7 @@ impl ActiveObject {
      */
     pub fn process_one_event(&mut self) {
         println!("ActiveObject::process_one_event");
-        
+
         let current_event: AoEvent;
 
         // Loop until there is an event on the queue
