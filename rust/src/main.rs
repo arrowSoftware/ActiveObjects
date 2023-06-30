@@ -1,3 +1,4 @@
+mod active_object_controller;
 mod action;
 mod active_object;
 mod ao_event;

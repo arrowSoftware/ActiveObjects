@@ -6,12 +6,15 @@ use crate::ao_signal::AoSignal;
 
 #[derive(Clone)]
 pub struct AoSuper {
-    ao_timers: Vec<AoTimer>
+    ao_timers: Vec<AoTimer>,
+    ao_subscriber_list: Vec<AoSignal>
 }
+
 impl AoSuper {
     pub fn new() -> AoSuper {
         AoSuper {
-            ao_timers: Vec::new()
+            ao_timers: Vec::new(),
+            ao_subscriber_list: Vec::new()
         }
     }
     pub fn add_timer(&mut self, timer: AoTimer) {
@@ -26,6 +29,13 @@ impl AoSuper {
         }
         expired_timers
     }
+    pub fn add_subscriber(&mut self, signal: AoSignal) {
+        self.ao_subscriber_list.push(signal);
+    }
+}
+
+pub fn ao_subscribe(ao_super: &mut AoSuper, signal: AoSignal) {
+    ao_super.add_subscriber(signal);
 }
 
 /**

@@ -1,6 +1,6 @@
 use crate::action::Action;
 use crate::action::Action::*;
-use crate::state::{State, AoSuper};
+use crate::state::{State, AoSuper, ao_subscribe};
 use crate::ao_event::AoEvent;
 use crate::ao_signal::AoSignal::*;
 use crate::active_object::ActiveObject;
@@ -27,9 +27,12 @@ struct PhiloThinking {
 impl PhiloThinking {
     fn new() -> PhiloThinking {
         println!("PhiloThinking::new");
-        PhiloThinking {
+        let mut state = PhiloThinking {
             ao_super: AoSuper::new()
-        }
+        };
+        ao_subscribe(&mut state.ao_super, AoEatSig);
+        ao_subscribe(&mut state.ao_super, AoDoneSig);
+        state
     }
 }
 
@@ -39,9 +42,12 @@ struct PhiloHungry {
 impl PhiloHungry {
     fn new() -> PhiloHungry {
         println!("PhiloHungry::new");
-        PhiloHungry {
+        let mut state = PhiloHungry {
             ao_super: AoSuper::new()
-        }
+        };
+        ao_subscribe(&mut state.ao_super, AoEatSig);
+        ao_subscribe(&mut state.ao_super, AoDoneSig);
+        state
     }
 }
 
@@ -51,9 +57,12 @@ struct PhiloEating {
 impl PhiloEating {
     fn new() -> PhiloEating {
         println!("PhiloEating::new");
-        PhiloEating {
+        let mut state = PhiloEating {
             ao_super: AoSuper::new()
-        }
+        };
+        ao_subscribe(&mut state.ao_super, AoEatSig);
+        ao_subscribe(&mut state.ao_super, AoDoneSig);
+        state
     }
 }
 
